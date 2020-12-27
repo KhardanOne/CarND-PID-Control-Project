@@ -45,6 +45,11 @@ class PID {
   double Kp;
   double Ki;
   double Kd;
+
+  /**
+   * Helpers
+   */
+  bool is_first_update = true;
 };
 
 #endif  // PID_H
