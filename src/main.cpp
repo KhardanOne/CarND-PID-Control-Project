@@ -40,9 +40,13 @@ int main() {
    * TODO: Initialize the pid variable.
    */
 
-  //        P    I    D
-  steering_pid.Init(0.3, 0.0, 15.0);
+  //                 P     I     D
+  steering_pid.Init(0.23, 0.0,  15.0);
   throttle_pid.Init(2.0, 0.001, 10.0);
+
+  // twiddle
+  steering_pid.Twiddle(2900, {0.2, 0.001, 1.0});
+
 
   h.onMessage([&steering_pid, &throttle_pid](uWS::WebSocket<uWS::SERVER> ws,
                     char *data, size_t length, uWS::OpCode opCode) {
@@ -69,13 +73,13 @@ int main() {
            * NOTE: Feel free to play around with the throttle and speed.
            *   Maybe use another PID controller to control the speed!
            */
-          steering_pid.UpdateError(cte, angle);
+          steering_pid.UpdateError(cte);
           steer_value = steering_pid.TotalError();
           steer_value = std::max(-1.0, std::min(1.0, steer_value));
 
           throttle_pid.UpdateError(speed - TARGET_SPEED);
           double throttle = throttle_pid.TotalError();
-          if (throttle > -1.6 && throttle < 0.0 ) {  // don't flash brake lights unneccessarily
+          if (throttle > -3.0 && throttle < 0.0 ) {  // don't flash brake lights unneccessarily
             throttle = 0.0;
           }
 
