@@ -4,8 +4,7 @@
 #include <string>
 #include "json.hpp"
 #include "PID.h"
-
-constexpr double TARGET_SPEED = 55.0;
+#include "twiddle.h"
 
 // for convenience
 using nlohmann::json;
@@ -40,15 +39,16 @@ int main() {
    * TODO: Initialize the pid variable.
    */
 
-  //                 P     I     D
-  steering_pid.Init(0.23, 0.0,  15.0);
+  constexpr double TARGET_SPEED = 35.0;
+
+  //                 P        I     D
+  steering_pid.Init(0.281, 0.0038, 6.0);
   throttle_pid.Init(2.0, 0.001, 10.0);
 
-  // twiddle
-  steering_pid.Twiddle(2900, {0.2, 0.001, 1.0});
-
-
-  h.onMessage([&steering_pid, &throttle_pid](uWS::WebSocket<uWS::SERVER> ws,
+  Twiddle twiddle;
+  twiddle.Init(&steering_pid, 2900, 3.5, 1.0, {0.0167, 0.0019, 0.417}, {0.002, 0.0001, 0.2});
+  
+  h.onMessage([&steering_pid, &throttle_pid, &twiddle](uWS::WebSocket<uWS::SERVER> ws,
                     char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -65,7 +65,7 @@ int main() {
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<string>());
           double speed = std::stod(j[1]["speed"].get<string>());
-          double angle = std::stod(j[1]["steering_angle"].get<string>());
+          //double angle = std::stod(j[1]["steering_angle"].get<string>());
           double steer_value;
           /**
            * TODO: Calculate steering value here, remember the steering value is
@@ -75,7 +75,14 @@ int main() {
            */
           steering_pid.UpdateError(cte);
           steer_value = steering_pid.TotalError();
-          steer_value = std::max(-1.0, std::min(1.0, steer_value));
+          bool reset = twiddle.Tune();
+
+          if (reset) {
+            std::cout << "Car Reset" << std::endl;
+            string msg = "42[\"reset\",{}]";
+            ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            return;
+          }
 
           throttle_pid.UpdateError(speed - TARGET_SPEED);
           double throttle = throttle_pid.TotalError();
@@ -83,27 +90,12 @@ int main() {
             throttle = 0.0;
           }
 
-          // DEBUG
-          static int run_count = 0;
-          static double steer_min = std::numeric_limits<double>::max();
-          static double steer_max = std::numeric_limits<double>::min();
-          static double cte_min = std::numeric_limits<double>::max();
-          static double cte_max = std::numeric_limits<double>::min();
-
-          ++run_count;
-          steer_min = std::min(steer_min, steer_value);
-          steer_max = std::max(steer_max, steer_value);
-          cte_min = std::min(cte_min, cte);
-          cte_max = std::max(cte_max, cte);
-          std::cout << run_count << "\tsteer min: " << steer_min << ", max: " << steer_max << ", cte min: " << cte_min << ", max: " << cte_max;
-          std::cout << " CTE: " << cte << " Steering Value: " << steer_value << " "; //<< std::endl;
-
           json msgJson;
           msgJson["steering_angle"] = steer_value;
           //msgJson["throttle"] = 0.3;
           msgJson["throttle"] = throttle;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }  // end "telemetry" if
       } else {

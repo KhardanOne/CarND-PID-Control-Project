@@ -31,8 +31,7 @@ class PID {
    */
   double TotalError();
 
- private:
-  /**
+   /**
    * PID Errors
    */
   double p_error;

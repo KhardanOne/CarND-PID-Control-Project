@@ -1,5 +1,8 @@
 #include "PID.h"
 #include <iostream>
+#include <vector>
+#include <iostream>
+#include <algorithm>
 
 /**
  * TODO: Complete the PID class. You may add any additional desired functions.
@@ -44,6 +47,6 @@ double PID::TotalError() {
   /**
    * DONE: Calculate and return the total error
    */
-  //std::cout << -Kp << "*" << p_error << " - " << Ki << "*" << i_error << " - " << Kd << "*" << d_error << " \t";
-  return -Kp * p_error - Ki * i_error - Kd * d_error;
+  //std::cout << -Kp << "*" << p_error << " - " << Ki << "*" << i_error << " - " << Kd << "*" << d_error << std::endl;
+  return std::max(-1.0, std::min(1.0, -Kp * p_error - Ki * i_error - Kd * d_error));
 }
