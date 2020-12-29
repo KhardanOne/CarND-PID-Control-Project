@@ -187,7 +187,7 @@ bool Twiddle::Tune() {
               state = State::DOWN;
               NudgeValue(param_index, state);
               NudgeValue(param_index, state);
-              std::cout << "UP did not work, err=" << error << ", best err=" << best_error << "nudge down twice K[" << param_index << "]";
+              std::cout << "UP did not work, err=" << error << ", best err=" << best_error << ", nudge down twice K[" << param_index << "]";
               PrintKs(true);
               return true;
             }
@@ -241,7 +241,11 @@ bool Twiddle::Tune() {
     }  // round ended
   }  // twiddle enabled
   else if (!enabled) {
-    std::cout << "Twindle disabled." << std::endl;
+    static bool printed = false;
+    if (!printed) {
+      std::cout << "Twiddle disabled." << std::endl;
+      printed = true;
+    }
     return false;
   }
   return false;
