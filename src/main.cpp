@@ -39,14 +39,17 @@ int main() {
    * TODO: Initialize the pid variable.
    */
 
-  constexpr double TARGET_SPEED = 35.0;
+  constexpr double TARGET_SPEED = 45.0;
+
+  // Twiddle ended after 21 starts. Reason: out of road. Kpid=(0.116, 0.002, 7), max abs CTE: 11.624, avg: 0.454473
+  // Best params: Kp = 0.128, Ki = 0.002, Kd = 7
 
   //                 P        I     D
-  steering_pid.Init(0.281, 0.0038, 6.0);
+  steering_pid.Init(0.15, 0.002, 7.0);
   throttle_pid.Init(2.0, 0.001, 10.0);
 
   Twiddle twiddle;
-  twiddle.Init(&steering_pid, 2900, 3.5, 1.0, {0.0167, 0.0019, 0.417}, {0.002, 0.0001, 0.2});
+  twiddle.Init(&steering_pid, 4000, 3.5, 1.0, {0.01, 0.0005, 0.3}, {0.002, 0.0001, 0.2});
   
   h.onMessage([&steering_pid, &throttle_pid, &twiddle](uWS::WebSocket<uWS::SERVER> ws,
                     char *data, size_t length, uWS::OpCode opCode) {

@@ -174,7 +174,7 @@ bool Twiddle::Tune() {
             double error = CalculateError();
             if (error < best_error) {  // up worked, go to next param and nudge that up
               tuning_params[param_index] *= TUNING_MULT;
-              std::cout << "UP worked because " << error << " < " << best_error << ", tuning_params[" << param_index << "] increased";
+              std::cout << "UP worked, err=" << error << ", best err=" << best_error << ", tuning_params[" << param_index << "] increased";
               best_error = error;
               best_params[0] = pid_ptr->Kp;
               best_params[1] = pid_ptr->Ki;
@@ -183,10 +183,11 @@ bool Twiddle::Tune() {
               // continues below to the next 
             }
             else {  // up did not work, nudge back and down
+              Reset();
               state = State::DOWN;
               NudgeValue(param_index, state);
               NudgeValue(param_index, state);
-              std::cout << "UP did not work, nudge down twice K[" << param_index << "]";
+              std::cout << "UP did not work, err=" << error << ", best err=" << best_error << "nudge down twice K[" << param_index << "]";
               PrintKs(true);
               return true;
             }
@@ -196,7 +197,7 @@ bool Twiddle::Tune() {
             double error = CalculateError();
             if (error < best_error) {  // down worked, go to next param and nudge that up
               tuning_params[param_index] *= TUNING_MULT;
-              std::cout << "DOWN worked because " << error << " < " << best_error << ", tuning_params[" << param_index << "] increased";
+              std::cout << "DOWN worked, err=" << error << ", best err=" << best_error << ", tuning_params[" << param_index << "] increased";
               best_error = error;
               best_params[0] = pid_ptr->Kp;
               best_params[1] = pid_ptr->Ki;
@@ -205,7 +206,8 @@ bool Twiddle::Tune() {
               // continues below to the next 
             }
             else {  // down did not work, reset value, we are close, decrease mult, go to next param and nudge that up
-              std::cout << "DOWN did not work, reset K[" << param_index << "] to orig";
+              std::cout << "DOWN did not work, err=" << error << ", best err=" << best_error << " reset K[" << param_index
+                << "] to orig, decrease tuning_params[" << param_index << "]";
               NudgeValue(param_index, State::UP);
               tuning_params[param_index] /= TUNING_MULT;
               // continues below to the next 
